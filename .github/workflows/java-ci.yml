@@ -1,0 +1,51 @@
+name: Java CI with Service Test
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Check Java Version
+        run: java -version
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Start Service
+        working-directory: ./artifacts  
+        id: start_service 
+        run: |
+          echo "Starting service..."
+          java -jar app-mbank.jar & 
+          SERVICE_PID=$!
+          echo "Service started with PID $SERVICE_PID"
+          echo "service_pid=$SERVICE_PID" >> $GITHUB_OUTPUT
+          sleep 10
+
+      - name: Run Tests
+        run: ./gradlew test
+      
+      - name: Stop Service
+        # Если этот шаг не имеет 'if', он выполнится только если 'Run Tests' успешен.
+        # Если 'Run Tests' падает, выполнение в job прекращается.
+        run: |
+          SERVICE_PID=$(steps.start_service.outputs.service_pid)
+          
+          if [ -n "$SERVICE_PID" ]; then            echo "Stopping service with PID $SERVICE_PID"
+            kill $SERVICE_PID || echo "Service with PID $SERVICE_PID was already stopped or not running."
+          else
+            echo "SERVICE_PID not found in outputs, skipping stop."
+          fi
