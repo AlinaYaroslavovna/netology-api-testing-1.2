@@ -8,14 +8,12 @@ on:
 
 jobs:
   build-and-test:
- 
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       
- 
     - name: Set up Java (Example)
       uses: actions/setup-java@v4
       with:
@@ -23,15 +21,13 @@ jobs:
         java-version: '11'
 
     - name: Build Application (Simulated)
-
       run: echo "Simulating build..." 
  
-      
     - name: Run Tests
-   
       run: echo "Running tests..."
     
-      
     - name: Check Test Results (Optional Cleanup)
-    
       run: echo "Tests finished successfully."
+      
+    - name: Run Application JAR
+      run: java -jar ./artifacts/app-mbank.jar
