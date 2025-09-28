@@ -24,31 +24,35 @@ jobs:
       run: chmod +x gradlew
       
     - name: Build Application (Simulated)
-      run: echo "Simulating build..." 
- 
-    - name: Run Tests
-      run: ./gradlew test
-      
-    - name: Check Test Results (Optional Cleanup)
-      run: echo "Tests finished successfully."
+      run: ./gradlew build # Выполняем сборку, чтобы создать JAR
 
+    # --- Шаг 1: Запуск приложения в фоновом режиме ---
     - name: Run Application JAR in Background
       run: |
-        java -jar ./artifacts/app-mbank.jar &
+        java -jar ./build/libs/app-mbank.jar & # Убедитесь, что путь к JAR правильный после сборки
         echo $! > app_pid.txt
       id: app_runner
 
     - name: Wait for Server to Start (Crucial Step)
-      run: sleep 10 
+      run: sleep 15 # Увеличим немного для надежности
 
+    # --- Шаг 2: Запуск тестов, которые зависят от запущенного сервера ---
+    # Предполагаем, что это тесты, которые падали (интеграционные)
     - name: Run Integration Tests Against Server
       run: |
         echo "Running integration tests..."
+        # Если вы можете запустить только интеграционные тесты, сделайте это здесь.
+        # Например, если они помечены тегом "integration":
+        # ./gradlew test --tests "*IntegrationTest*" 
+        
+        # Если вы хотите запустить ВСЕ тесты, но теперь сервис доступен:
+        ./gradlew test 
+      # Если тесты упадут, этот шаг завершит работу джоба с ошибкой (exit code 1)
 
+    # --- Шаг 3: Остановка сервера ---
     - name: Stop Application Server
       if: always()
       run: |
-        APP_PID=$(cat app_pid.txt)
-        echo "Stopping application with PID: $APP_PID"
+        APP_PID=$(cat app_pid.txt)        echo "Stopping application with PID: $APP_PID"
         kill $APP_PID || echo "Process $APP_PID was already dead."
         rm app_pid.txt
