@@ -20,6 +20,9 @@ jobs:
         distribution: 'temurin'
         java-version: '11'
 
+    - name: Grant Execute Permission to Gradle Wrapper
+      run: chmod +x gradlew
+      
     - name: Build Application (Simulated)
       run: echo "Simulating build..." 
  
