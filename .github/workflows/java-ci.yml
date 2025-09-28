@@ -21,10 +21,13 @@ jobs:
       run: chmod +x gradlew
 
     - name: Start Service in Background
+      id: service_start # Даем шагу ID
       run: |
         java -jar ./artifacts/app-mbank.jar &
         SERVICE_PID=$!
         echo "Service started with PID $SERVICE_PID"
+        # Сохраняем PID в переменную окружения для последующих шагов
+        echo "SERVICE_PID=$SERVICE_PID" >> $GITHUB_ENV
         sleep 10
           
     - name: Run Tests
@@ -32,4 +35,11 @@ jobs:
       
     - name: Stop Service
       if: always()
-      run: kill $SERVICE_PID || true
+      # $SERVICE_PID теперь доступен, потому что он был записан в $GITHUB_ENV
+      run: |
+        if [ -n "$SERVICE_PID" ]; then
+          echo "Stopping service with PID $SERVICE_PID"
+          kill $SERVICE_PID || true
+        else
+          echo "SERVICE_PID not found, skipping stop."
+        fi
