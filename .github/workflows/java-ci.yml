@@ -32,7 +32,7 @@ jobs:
       id: app_runner
       run: |
         # Убедитесь, что путь к JAR корректен (например, build/libs/app-mbank.jar)
-        java -jar ./build/libs/app-mbank.jar > app.log 2>&1 & 
+        java -jar ./artifacts/app-mbank.jar app.log 2>&1 & 
         echo $! > app_pid.txt
         echo "Application started with PID: $(cat app_pid.txt)"
 
