@@ -17,7 +17,7 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
           cache: 'gradle'
-
+        
       - name: Check Java Version
         run: java -version
 
@@ -25,27 +25,36 @@ jobs:
         run: chmod +x gradlew
 
       - name: Start Service
-        working-directory: ./artifacts  
+        # Используем id, чтобы получить доступ к output в последующих шагах
         id: start_service 
+        # Убедитесь, что команда выполняется в фоновом режиме (&)
         run: |
           echo "Starting service..."
+          # Предполагается, что app-mbank.jar находится в корне репозитория или доступен
           java -jar app-mbank.jar & 
           SERVICE_PID=$!
           echo "Service started with PID $SERVICE_PID"
+          # Сохраняем PID в GITHUB_OUTPUT
           echo "service_pid=$SERVICE_PID" >> $GITHUB_OUTPUT
-          sleep 10
+          sleep 10 # Даем сервису время на инициализацию
 
       - name: Run Tests
+        # Этот шаг, вероятно, должен выполняться в той же директории, где запущен сервис, 
+        # или вы должны настроить его так, чтобы он знал, как обращаться к сервису.
         run: ./gradlew test
       
       - name: Stop Service
-        # Если этот шаг не имеет 'if', он выполнится только если 'Run Tests' успешен.
-        # Если 'Run Tests' падает, выполнение в job прекращается.
+        # Этот шаг выполняется независимо от успеха или неудачи предыдущего шага (Run Tests)
+        if: success() || failure() 
         run: |
-          SERVICE_PID=$(steps.start_service.outputs.service_pid)
+          # !!! ИСПОЛЬЗУЕМ СИНТАКСИС ШАБЛОНА ДЛЯ ЧТЕНИЯ OUTPUT !!!
+          SERVICE_PID=${{ steps.start_service.outputs.service_pid }}
           
-          if [ -n "$SERVICE_PID" ]; then            echo "Stopping service with PID $SERVICE_PID"
+          if [ -n "$SERVICE_PID" ]; then
+            echo "Stopping service with PID $SERVICE_PID"
+            # Отправляем сигнал SIGTERM (15) для чистого завершения
             kill $SERVICE_PID || echo "Service with PID $SERVICE_PID was already stopped or not running."
           else
             echo "SERVICE_PID not found in outputs, skipping stop."
           fi
+        shell: /usr/bin/bash -e {0}
