@@ -8,30 +8,49 @@ on:
 
 jobs:
   build-and-test:
- 
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       
- 
-    - name: Set up Java (Example)
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '11'
 
     - name: Build Application (Simulated)
-
       run: echo "Simulating build..." 
  
-      
     - name: Run Tests
-   
       run: echo "Running tests..."
     
-      
     - name: Check Test Results (Optional Cleanup)
-    
       run: echo "Tests finished successfully."
+      
+    - name: Run Application JAR in Background
+    
+      run: |
+        java -jar ./artifacts/app-mbank.jar &
+        echo $! > app_pid.txt  # Сохраняем PID запущенного процесса
+      id: app_runner
+
+    - name: Wait for Server to Start (Crucial Step)
+      run: sleep 10 
+
+    - name: Run Integration Tests Against Server
+      run: |
+        # Здесь вы запускаете свои тесты, которые стучатся к localhost:порт_вашего_приложения
+        echo "Running integration tests..."
+        # Например, curl http://localhost:8080/health
+
+    - name: Stop Application Server
+   
+      if: always()
+      run: |
+        # Читаем PID, сохраненный в предыдущем шаге
+        APP_PID=$(cat app_pid.txt)
+        echo "Stopping application with PID: $APP_PID"
+        kill $APP_PID || echo "Process $APP_PID was already dead."
+        rm app_pid.txt
