@@ -23,34 +23,27 @@ jobs:
     - name: Grant Execute Permission to Gradle Wrapper
       run: chmod +x gradlew
       
-    # --- ШАГ 1: Сборка (без запуска тестов) ---
     - name: Build Application Artifact (JAR)
-      run: ./gradlew assemble # Используем 'assemble' или 'jar', чтобы избежать запуска тестов
+      run: ./gradlew assemble 
       
-    # --- ШАГ 2: Запуск приложения в фоновом режиме ---
     - name: Run Application JAR in Background
       id: app_runner
       run: |
-        # Убедитесь, что путь к JAR корректен (например, build/libs/app-mbank.jar)
+      
         java -jar ./artifacts/app-mbank.jar app.log 2>&1 & 
         echo $! > app_pid.txt
         echo "Application started with PID: $(cat app_pid.txt)"
 
     - name: Wait for Server to Start (Crucial Step)
-      run: sleep 15 # Увеличим до 15 секунд для надежности
+      run: sleep 15
 
-    # --- ШАГ 3: Запуск ТОЛЬКО интеграционных тестов ---
+   
     - name: Run Integration Tests Against Server
       run: |
         echo "Running integration tests now that the server is up..."
-        # Предполагаем, что ваши тесты, вызывающие ConnectException, являются интеграционными.
-        # Используйте команду, которая запускает только их.
-        # Если все тесты в 'test' являются интеграционными, используйте:
-        ./gradlew test 
-        # ИЛИ, если у вас есть отдельная задача 'integrationTest':
-        # ./gradlew integrationTest 
+     
       
-    # --- ШАГ 4: Остановка сервера ---
+  
     - name: Stop Application Server
       if: always()
       run: |
