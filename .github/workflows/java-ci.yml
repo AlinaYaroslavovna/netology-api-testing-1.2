@@ -23,27 +23,34 @@ jobs:
     - name: Grant Execute Permission to Gradle Wrapper
       run: chmod +x gradlew
       
+    
     - name: Build Application Artifact (JAR)
       run: ./gradlew assemble 
       
+    
     - name: Run Application JAR in Background
       id: app_runner
       run: |
+        
         java -jar ./artifacts/app-mbank.jar app.log 2>&1 & 
         echo $! > app_pid.txt
         echo "Application started with PID: $(cat app_pid.txt)"
 
     - name: Wait for Server to Start (Crucial Step)
-      run: sleep 15
+      run: sleep 15 
 
-   
+    
     - name: Run Integration Tests Against Server
       run: |
         echo "Running integration tests now that the server is up..."
-        ./gradlew integrationTest 
-
+        
+        
+        
+        ./gradlew test 
+        
+        # ./gradlew integrationTest 
       
-  
+   
     - name: Stop Application Server
       if: always()
       run: |
