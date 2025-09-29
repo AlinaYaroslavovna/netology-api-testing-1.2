@@ -29,7 +29,6 @@ jobs:
     - name: Run Application JAR in Background
       id: app_runner
       run: |
-      
         java -jar ./artifacts/app-mbank.jar app.log 2>&1 & 
         echo $! > app_pid.txt
         echo "Application started with PID: $(cat app_pid.txt)"
@@ -41,7 +40,8 @@ jobs:
     - name: Run Integration Tests Against Server
       run: |
         echo "Running integration tests now that the server is up..."
-     
+        ./gradlew integrationTest 
+
       
   
     - name: Stop Application Server
